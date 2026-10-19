@@ -1,0 +1,14 @@
+name: pkpd-simulator
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - pandas
+  - matplotlib
+  - jupyterlab
+  - pytest
+  - pip
+  - pip:
+      - streamlit
