@@ -52,3 +52,25 @@ def test_accumulation_matches_simulation():
 
 def test_emax_at_ec50_is_half_of_emax():
     assert np.isclose(m.emax_model(5.0, Emax=100, EC50=5.0), 50.0)
+
+
+def test_two_comp_hybrid_constants_identities():
+    k10, k12, k21 = 0.35, 0.80, 0.30
+    p = m.two_comp_derived(500, 15, k10, k12, k21)
+    alpha, beta = p["alpha (1/h)"], p["beta (1/h)"]
+    assert np.isclose(alpha + beta, k10 + k12 + k21)
+    assert np.isclose(alpha * beta, k10 * k21)
+    assert np.isclose(p["A (mg/L)"] + p["B (mg/L)"], 500 / 15)
+
+
+def test_two_comp_auc_matches_a_over_alpha_plus_b_over_beta():
+    p = m.two_comp_derived(500, 15, 0.35, 0.80, 0.30)
+    auc = p["A (mg/L)"] / p["alpha (1/h)"] + p["B (mg/L)"] / p["beta (1/h)"]
+    assert np.isclose(auc, p["AUC (mg.h/L)"])
+
+
+def test_two_comp_ode_matches_analytical():
+    t = np.linspace(0, 48, 500)
+    c_ana = m.two_comp_iv(t, 500, 15, 0.35, 0.80, 0.30)
+    _, c1, _ = m.two_comp_ode(t, 500, 15, 0.35, 0.80, 0.30)
+    assert np.allclose(c1, c_ana, rtol=1e-6, atol=1e-8)

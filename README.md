@@ -24,7 +24,8 @@ pharmacokinetics-pharmacodynamics/
 │   ├── models.py        # analytical PK/PD models
 │   └── drugs.py         # illustrative drug parameters
 ├── notebooks/
-│   └── 01_one_compartment.ipynb
+│   ├── 01_one_compartment.ipynb
+│   └── 02_two_compartment.ipynb
 ├── tests/
 │   └── test_models.py   # sanity checks (half-life, AUC, tmax, accumulation...)
 ├── figures/
@@ -68,14 +69,14 @@ jupyter lab            # open the notebooks
 | # | Notebook | Topic |
 |---|---|---|
 | 01 | `01_one_compartment.ipynb` | IV bolus, oral absorption, repeated dosing |
-| 02 | *planned* | Two-compartment model |
+| 02 | `02_two_compartment.ipynb` | Biexponential decay, ODE validation, peeling method |
 | 03 | *planned* | PD Emax and PK/PD link |
 
 ## Roadmap
 
 - [x] Core analytical models + tests
 - [x] Notebook 01: one-compartment models
-- [ ] Notebook 02: two-compartment model
+- [x] Notebook 02: two-compartment model
 - [ ] Notebook 03: PD Emax / dose-response
 - [ ] Streamlit interactive app
 - [ ] Results figures in `figures/`

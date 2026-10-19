@@ -89,6 +89,53 @@ def two_comp_iv(t, dose: float, V1: float, k10: float, k12: float, k21: float) -
     return np.where(t >= 0, A * np.exp(-alpha * tp) + B * np.exp(-beta * tp), 0.0)
 
 
+def two_comp_derived(dose: float, V1: float, k10: float, k12: float, k21: float) -> dict:
+    """Hybrid constants and derived parameters of the two-compartment IV bolus model.
+
+    Returns alpha, beta (1/h), A, B (mg/L), CL (L/h), V2 and Vss (L),
+    the half-lives of both phases (h) and the AUC (mg.h/L).
+    """
+    s = k10 + k12 + k21
+    disc = np.sqrt(s**2 - 4.0 * k10 * k21)
+    alpha = (s + disc) / 2.0
+    beta = (s - disc) / 2.0
+    A = (dose / V1) * (alpha - k21) / (alpha - beta)
+    B = (dose / V1) * (k21 - beta) / (alpha - beta)
+    CL = k10 * V1
+    V2 = V1 * k12 / k21
+    return {
+        "alpha (1/h)": alpha,
+        "beta (1/h)": beta,
+        "A (mg/L)": A,
+        "B (mg/L)": B,
+        "t1/2 alpha (h)": np.log(2) / alpha,
+        "t1/2 beta (h)": np.log(2) / beta,
+        "CL (L/h)": CL,
+        "V2 (L)": V2,
+        "Vss (L)": V1 + V2,
+        "AUC (mg.h/L)": dose / CL,
+    }
+
+
+def two_comp_ode(t, dose: float, V1: float, k10: float, k12: float, k21: float):
+    """Numerical solution of the two-compartment model (IV bolus).
+
+    Returns (t, C_central, C_peripheral) in mg/L. Useful to validate the
+    analytical solution and to look at the peripheral compartment.
+    """
+    from scipy.integrate import solve_ivp
+
+    t = np.asarray(t, dtype=float)
+    V2 = V1 * k12 / k21
+
+    def rhs(_, a):
+        a1, a2 = a
+        return [-(k10 + k12) * a1 + k21 * a2, k12 * a1 - k21 * a2]
+
+    sol = solve_ivp(rhs, (t[0], t[-1]), [dose, 0.0], t_eval=t, rtol=1e-10, atol=1e-12)
+    return sol.t, sol.y[0] / V1, sol.y[1] / V2
+
+
 # --------------------------------------------------------------------------- #
 # Repeated dosing
 # --------------------------------------------------------------------------- #
