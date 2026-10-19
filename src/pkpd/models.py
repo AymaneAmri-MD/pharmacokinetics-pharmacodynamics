@@ -171,3 +171,37 @@ def emax_model(C, Emax: float, EC50: float, hill: float = 1.0, E0: float = 0.0) 
     """Sigmoid Emax model: E = E0 + Emax * C^n / (EC50^n + C^n)."""
     C = np.asarray(C, dtype=float)
     return E0 + Emax * C**hill / (EC50**hill + C**hill)
+
+
+def ec_fraction(EC50: float, hill: float, fraction: float) -> float:
+    """Concentration giving a given fraction of Emax: EC50 * (f / (1 - f))^(1/n).
+
+    Example: ec_fraction(EC50, n, 0.9) is the EC90.
+    """
+    return EC50 * (fraction / (1.0 - fraction)) ** (1.0 / hill)
+
+
+def effect_site_concentration(t, dose: float, V: float, k: float, ke0: float) -> np.ndarray:
+    """Effect-site (biophase) concentration after a one-compartment IV bolus.
+
+    The effect compartment follows dCe/dt = ke0 * (Cp - Ce), which gives
+    Ce(t) = C0 * ke0 / (ke0 - k) * (exp(-k t) - exp(-ke0 t)).
+    A small ke0 means a long delay between plasma concentration and effect.
+    """
+    t = np.asarray(t, dtype=float)
+    tp = np.clip(t, 0.0, None)
+    c0 = dose / V
+    if np.isclose(ke0, k):
+        ce = c0 * k * tp * np.exp(-k * tp)
+    else:
+        ce = c0 * ke0 / (ke0 - k) * (np.exp(-k * tp) - np.exp(-ke0 * tp))
+    return np.where(t >= 0, ce, 0.0)
+
+
+def fraction_time_above(c, threshold: float) -> float:
+    """Fraction of time a concentration profile spends above a threshold.
+
+    Assumes ``c`` is sampled on a uniform time grid.
+    """
+    c = np.asarray(c, dtype=float)
+    return float(np.mean(c > threshold))

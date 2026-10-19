@@ -74,3 +74,26 @@ def test_two_comp_ode_matches_analytical():
     c_ana = m.two_comp_iv(t, 500, 15, 0.35, 0.80, 0.30)
     _, c1, _ = m.two_comp_ode(t, 500, 15, 0.35, 0.80, 0.30)
     assert np.allclose(c1, c_ana, rtol=1e-6, atol=1e-8)
+
+
+def test_ec_fraction_gives_expected_effect():
+    EC50, hill, Emax = 2.0, 1.7, 100.0
+    for f in (0.1, 0.5, 0.9):
+        c = m.ec_fraction(EC50, hill, f)
+        assert np.isclose(m.emax_model(c, Emax, EC50, hill), f * Emax)
+
+
+def test_effect_site_starts_at_zero_and_peaks_when_it_crosses_plasma():
+    dose, V, k, ke0 = 100.0, 50.0, 0.2, 0.3
+    t = np.linspace(0, 40, 400001)
+    ce = m.effect_site_concentration(t, dose, V, k, ke0)
+    cp = m.one_comp_iv(t, dose, V, k)
+    assert ce[0] == 0.0
+    i = np.argmax(ce)
+    assert np.isclose(ce[i], cp[i], rtol=1e-4)  # classic property of the effect compartment
+    assert np.isclose(t[i], np.log(ke0 / k) / (ke0 - k), atol=1e-3)
+
+
+def test_fraction_time_above():
+    c = np.array([0.0, 1.0, 2.0, 3.0])
+    assert m.fraction_time_above(c, 1.5) == 0.5
